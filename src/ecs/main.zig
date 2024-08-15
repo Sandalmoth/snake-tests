@@ -11,8 +11,8 @@ const STORAGE_LOAD_MIN = 0.3;
 const STORAGE_PRIME = 2654435741;
 const BUCKET_PRIME = 2654435789;
 
-const Entity = u64;
-const nil: Entity = 0;
+pub const Entity = u64;
+pub const nil: Entity = 0;
 
 const BucketHeader = struct {
     next: ?*Bucket,
