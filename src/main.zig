@@ -3,7 +3,11 @@ const rl = @import("raylib");
 
 const State = @import("ecs/main.zig").State;
 const Entity = @import("ecs/main.zig").Entity;
+
 const RT = @import("pmek/rt.zig").RT;
+const GCA = @import("pmek/gc.zig").GCAllocator;
+const Object = @import("pmek/object.zig").Object;
+const debugPrint = @import("pmek/object.zig").debugPrint;
 
 const SnakePart = struct {
     x: f32,
@@ -15,6 +19,7 @@ const GameState = struct {
     snake_parts: State,
 };
 
+var entity_counter: u64 = 1;
 var states: [2]GameState = undefined;
 var current_state: usize = 0;
 
@@ -29,6 +34,30 @@ fn nextState(init: bool, deinit: bool) void {
         states[next_state].snake_parts = State.copy(&states[current_state].snake_parts, SnakePart);
     }
     current_state = next_state;
+}
+
+fn primitiveSpawnPart(gca: *GCA, objargs: ?*Object) ?*Object {
+    debugPrint(objargs);
+    _ = gca;
+    std.debug.assert(objargs != null);
+    var cons = objargs.?.as(.cons);
+    const x = cons.car.?.as(.real).val;
+    cons = cons.cdr.?.as(.cons);
+    const y = cons.car.?.as(.real).val;
+    cons = cons.cdr.?.as(.cons);
+    const len = cons.car.?.as(.real).val;
+    std.debug.assert(cons.cdr == null);
+
+    const e = entity_counter;
+    entity_counter += 1;
+    states[current_state].snake_parts.set(SnakePart, e, .{
+        .x = @floatCast(x),
+        .y = @floatCast(y),
+        .life = @intFromFloat(len),
+    });
+    std.debug.print("{} {} {}\n", .{ x, y, len });
+
+    return null;
 }
 
 pub fn main() !void {
@@ -57,17 +86,23 @@ pub fn main() !void {
     for (0..states.len - 1) |_| nextState(true, false);
 
     // states[current_state].snake_parts.set(SnakePart, 1, .{ .x = 16, .y = 16, .life = 10 });
+    rt.addPrimitive("spawn-part", primitiveSpawnPart);
     const stdout = std.io.getStdOut().writer();
     try rt.rep("(def head-x 40)", stdout); // NOTE supports only a single form per call
-    try rt.rep("(def head-x 22)", stdout);
+    try rt.rep("(def head-y 22)", stdout);
     try rt.rep("(def head-dir 0)", stdout);
     try rt.rep("(def snake-len 5)", stdout);
 
-    const logic_tick: f32 = 500.0; // ms
+    const logic_tick: f32 = 250.0; // ms
     var lag: f32 = 0.0;
     var timer = try std.time.Timer.start();
 
     while (!rl.windowShouldClose()) {
+        if (rl.isKeyDown(.key_right)) try rt.rep("(def head-dir 0)", stdout);
+        if (rl.isKeyDown(.key_up)) try rt.rep("(def head-dir 1)", stdout);
+        if (rl.isKeyDown(.key_left)) try rt.rep("(def head-dir 2)", stdout);
+        if (rl.isKeyDown(.key_down)) try rt.rep("(def head-dir 3)", stdout);
+
         // Update
         lag += @as(f32, @floatFromInt(timer.lap())) * 1e-6;
         if (lag > logic_tick) {
@@ -95,8 +130,6 @@ pub fn main() !void {
             }
 
             {
-                // TODO add this as a primitive function
-                try rt.rep("(spawn-part head-x head-y snake-len)", stdout);
                 try rt.rep(
                     \\ (if (= head-dir 0)
                     \\   (def head-x (+ head-x 1))
@@ -111,6 +144,7 @@ pub fn main() !void {
                     \\   )
                     \\ )
                 , stdout);
+                try rt.rep("(spawn-part head-x head-y snake-len)", stdout);
             }
             lag -= logic_tick;
         }
