@@ -206,12 +206,17 @@ pub fn main() !void {
     // fill the entire state buffer with the first state
     for (0..states.len) |_| nextState(true, false);
 
+    // for whatever reason, it crashes when resetting
+    // i think it's probably a bug in the ecs copying, but haven't tracked it down
     const reset = this().copy();
     defer reset.deinit();
 
     var lag: f32 = 0.0;
     var timer = try std.time.Timer.start();
 
+    // it also crashes when resetting to identical copies of a state
+    // like the reset, or if we do two rollbacks in a row
+    // so just prevent that second case
     var reset_timer: usize = 11;
 
     while (!rl.windowShouldClose()) {
