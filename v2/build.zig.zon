@@ -24,8 +24,12 @@
     // internet connectivity.
     .dependencies = .{
         .@"raylib-zig" = .{
-            .url = "https://github.com/Not-Nik/raylib-zig/archive/devel.tar.gz",
-            .hash = "1220ff1a9e774784fe3f11ffe71bc0186f9e62eb0fe1727f676d038b62665a5c74c5",
+            .url = "https://github.com/Not-Nik/raylib-zig/archive/58df628.tar.gz",
+            .hash = "1220df9aa89d657f5dca24ab0ac3d187f7a992a4d27461fd9e76e934bf0670ca9a90",
+        },
+        .@"scethy" = .{
+            .url = "https://github.com/Sandalmoth/scethy/archive/7ddf053.tar.gz",
+            .hash = "12209113bb385e99b37c8b7a3e44d44af0fd7b8a22af8e7c38d62a608e4c1f6c867c",
         },
     },
     .paths = .{
